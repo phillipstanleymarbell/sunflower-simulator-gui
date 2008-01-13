@@ -1,0 +1,4 @@
+syntax: glob
+*.dis
+*.sbl
+.DS_Store
