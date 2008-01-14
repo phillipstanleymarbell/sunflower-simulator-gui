@@ -1,0 +1,168 @@
+dev
+	root
+	cons
+	env
+	mnt
+	pipe
+	prog
+#	prof
+	srv
+	ssl
+	cap
+	fs
+#	cmd	cmd
+#	cmd
+	indir
+
+#	draw
+
+	ip      ipif-posix ipaux
+#	eia
+#	audio	audio
+#	mem
+	myrmigki
+
+lib
+	myrmigki
+	interp
+#	tk
+#	freetype
+	math
+	draw
+#	memlayer
+#	memdraw
+	keyring
+	crypt
+	9
+
+link
+
+mod
+	sys
+#	draw
+#	tk
+	math
+	srv	srv
+	keyring
+	loader
+#	freetype
+
+port
+	alloc
+	cache
+	chan
+	dev
+	dial
+	dis
+	discall
+	env
+	error
+	errstr
+	exception
+	exportfs
+	inferno
+	latin1
+	main
+	parse
+	pgrp
+	print
+	proc
+	qio
+	random
+	sysfile
+	uqid
+
+code
+#	int	dontcompile = 1;
+#	Xsize	= 1139;
+#	Ysize	= 853;
+#	dflag	= 1;
+#	globfs	= 1;
+
+init
+	mgui	
+
+root
+	/n/remote	/
+	/dev		/
+	/prog		/
+	/net		/
+	/chan		/
+	/env		/
+	/mnt/myrmigki	/
+	/lib/ndb/local
+	/lib/ndb/dns
+	/lib/ndb/inferno
+	/lib/ndb/common
+	/dis/emuinit.dis
+	/appl/myrmigki/pgui.dis
+	/appl/myrmigki/images/banner.gif
+	/appl/myrmigki/images/poppi-bomb.gif
+	/appl/myrmigki/images/poppi-cpu.gif
+	/appl/myrmigki/images/poppi-keyboard.gif
+	/appl/myrmigki/images/poppi-nodeinfo.gif
+	/appl/myrmigki/images/poppi-nodestderr.gif
+	/appl/myrmigki/images/poppi-nodestdout.gif
+	/appl/myrmigki/images/poppi-siminfo.gif
+	/appl/myrmigki/images/poppi-straightjacket.gif
+	/appl/myrmigki/images/poppi-typewriter.gif
+	/appl/myrmigki/images/poppi-warning.gif
+	/appl/myrmigki/images/splash.gif
+	/dis/lib/arg.dis
+	/dis/lib/attrdb.dis
+	/dis/lib/auth.dis
+	/dis/lib/bufio.dis
+	/dis/lib/daytime.dis
+	/dis/lib/env.dis
+	/dis/lib/filepat.dis
+	/dis/lib/workdir.dis
+	/dis/lib/imageremap.dis
+	/dis/lib/ip.dis
+	/dis/lib/ipattr.dis
+	/dis/lib/readdir.dis
+	/dis/lib/readgif.dis
+	/dis/lib/regex.dis
+	/dis/lib/ssl.dis
+	/dis/lib/string.dis
+	/dis/lib/titlebar.dis
+	/dis/lib/url.dis
+	/dis/lib/wmclient.dis
+	/dis/lib/wmlib.dis
+	/dis/lib/wmsrv.dis
+	/dis/lib/lock.dis
+	/dis/lib/tkclient.dis
+	/dis/lib/selectfile.dis
+	/dis/lib/winplace.dis
+	/dis/lib/dialog.dis
+	/dis/lib/deflate.dis
+	/dis/lib/styx.dis
+	/dis/lib/styxlib.dis
+	/dis/lib/debug.dis
+	/dis/lib/dis.dis
+	/dis/ndb/cs.dis
+	/dis/ndb/dns.dis
+	/dis/webgrab.dis
+	/dis/memfs.dis
+	/dis/cat.dis
+	/dis/echo.dis
+	/dis/stack.dis
+	/dis/mv.dis
+	/dis/cp.dis
+	/dis/cd.dis
+	/dis/rm.dis
+	/dis/sh.dis
+	/dis/styxlisten.dis
+	/dis/listen.dis
+	/dis/ls.dis
+	/dis/lc.dis
+	/dis/kill.dis
+	/dis/ed.dis
+	/dis/gzip.dis
+	/dis/gunzip.dis
+	/dis/bind.dis
+	/dis/mount.dis
+	/dis/export.dis
+	/dis/ps.dis
+	/dis/sed.dis
+	/dis/netstat.dis
+	/usr/myrmigki/keyring/default

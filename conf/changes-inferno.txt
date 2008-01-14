@@ -1,0 +1,193 @@
+(1)
+diff -r inferno/module/wmsrv.m /Users/pip/infernoR420060303/module/wmsrv.m
+13c13
+< 		r:	Draw->Rect;
+---
+> 		r:	Rect;
+
+
+(2)
+diff -r inferno/mkfiles/mkfile-Nt-386 /Users/pip/infernoR420060303/mkfiles/mkfile-Nt-386
+
+38c38
+
+< SYSLIBS=	#binmode.obj
+
+---
+
+> SYSLIBS=	binmode.obj
+
+
+
+(3)
+
+diff -r inferno/emu/Nt/win.c /Users/pip/infernoR420060303/emu/Nt/win.c
+
+603c603
+
+< 			L"Sunflower Simulator",		/* caption */
+
+---
+
+> 			L"Inferno",		/* caption */
+
+619c619
+
+< 			"Sunflower Simulator",		/* caption */
+
+---
+
+> 			"Inferno",		/* caption */
+
+Only in inferno/emu/port: .DS_Store
+
+diff -r inferno/emu/port/alloc.c /Users/pip/infernoR420060303/emu/port/alloc.c
+
+51,53c51,53
+
+< 		{ "main",  0, 	512*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+
+< 		{ "heap",  1, 	512*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+
+< 		{ "image", 2,   512*1024*1024+256, 31, 4*1024*1024, 1, 31*1024*1024 },
+
+---
+
+> 		{ "main",  0, 	32*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+
+> 		{ "heap",  1, 	32*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+
+> 		{ "image", 2,   32*1024*1024+256, 31, 4*1024*1024, 1, 31*1024*1024 },
+
+
+diff -r inferno/emu/port/main.c /Users/pip/infernoR420060303/emu/port/main.c
+
+21,22c21,22
+
+< 	int	Xsize	= 800;
+
+< 	int	Ysize	= 600;
+
+---
+
+> 	int	Xsize	= 640;
+
+> 	int	Ysize	= 480;
+
+253,255c253
+
+< 	{
+
+< 		print("Sunflower simulator embedded in Inferno %s main (pid=%d) %s\n", VERSION, getpid(), opt);
+
+< 	}
+
+---
+
+> 		print("Inferno %s main (pid=%d) %s\n", VERSION, getpid(), opt);
+
+diff -r inferno/emu/port/win-x11a.c /Users/pip/infernoR420060303/emu/port/win-x11a.c
+
+714c714
+
+< 	name.value = (uchar*)"sunflower";
+
+---
+
+> 	name.value = (uchar*)"inferno";
+
+724,726c724,726
+
+< 	classhints.res_name = "sunflower";
+
+< 	classhints.res_class = "Sunflower";
+
+< 	argv[0] = "sunflower";
+
+---
+
+> 	classhints.res_name = "inferno";
+
+> 	classhints.res_class = "Inferno";
+
+> 	argv[0] = "inferno";
+
+
+
+
+(4)
+diff -r inferno/emu/Nt/mkfile /Users/pip/infernoR420060303/emu/Nt/mkfile
+
+38c38
+
+< CFLAGS='-DROOT="."' -DEMU -I. -I../port -I$ROOT/$SYSTARG/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp $CTHREADFLAGS $CFLAGS $EMUOPTIONS -I$ROOT/libsunflower -DLIBSF -DSF_L_ENDIAN
+
+---
+
+> CFLAGS='-DROOT="'$ROOT'"' -DEMU -I. -I../port -I$ROOT/$SYSTARG/$OBJTYPE/include -I$ROOT/include -I$ROOT/libinterp $CTHREADFLAGS $CFLAGS $EMUOPTIONS
+
+
+
+
+
+
+
+(5)
+diff -r inferno/emu/Nt/devfs.c /Users/pip/infernoR420060303/emu/Nt/devfs.c
+
+134c134
+
+< 	char    rootdir[MAXROOT] = ".";
+
+---
+
+> 	char    rootdir[MAXROOT] = "\\inferno";
+
+
+
+
+
+
+(6)
+diff -r inferno/appl/lib/imageremap.b /Users/pip/infernoR420060303/appl/lib/imageremap.b
+
+562,564c562
+
+< 	im := d.newimage(i.r, d.image.chans, 0, Draw->Black);
+
+< 
+
+< 
+
+---
+
+> 	im := d.newimage(i.r, Draw->CMAP8, 0, Draw->Black);
+
+571,583d568
+
+<         if(i.chandesc==RImagefile->CRGB && d.image.depth==24){
+
+<                 sys->print("depth = %d\n", d.image.depth);
+
+<                 pic = array[3*len pic] of byte;
+
+<                 k:=0;
+
+<                 for(j=0; j<len i.chans[0]; j++){
+
+<                         pic[k++] = i.chans[2][j];
+
+<                         pic[k++] = i.chans[1][j];
+
+<                         pic[k++] = i.chans[0][j];
+
+<                 }
+
+<                 im.writepixels(im.r, pic);
+
+<                 return (im, "");
+
+<         }
+
+< 
+

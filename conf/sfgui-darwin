@@ -1,0 +1,281 @@
+dev
+	root
+	cons
+	env
+	mnt
+	pipe
+	prog
+#	prof
+	srv
+	dup
+	ssl
+#	cap
+	fs
+	cmd	cmd
+	cmd
+	indir
+
+	draw
+
+	ip	ipif ipaux
+#	eia
+#	audio	audio
+#	mem
+#	arch
+	pointer
+	snarf
+	sign
+	sunflower
+
+lib
+	sunflower
+	interp
+	tk
+	freetype
+	math
+	draw
+	memlayer
+	memdraw
+	keyring
+	sec
+	mp
+	9
+
+link
+
+mod
+	sys
+	draw
+	tk
+	math
+	srv	srv
+	keyring
+	loader
+	freetype
+
+port
+	alloc
+	cache
+	chan
+	dev
+	dial
+	dis
+	discall
+	env
+	error
+	errstr
+	exception
+	exportfs
+	inferno
+	latin1
+	main
+	parse
+	pgrp
+	print
+	proc
+	qio
+	random
+	sysfile
+	uqid
+
+code
+	int		dontcompile = 1;
+	int		macjit = 1;
+#	extern int 	Xsize, Ysize, dflag, globfs;
+#	Xsize	= 1139;
+#	Ysize	= 853;
+#	dflag	= 1;
+#	globfs	= 1;
+
+init
+	emuinit	
+
+root
+	/fd			/
+	/n/remote		/
+	/dev			/
+	/prog			/
+	/net			/
+	/net.alt		/
+	/chan			/
+	/env			/
+	/nvfs			/
+	/mnt/sunflower		/
+	/mnt/sunflower/shared	/
+	/lib/ndb/local
+	/lib/ndb/dns
+	/lib/ndb/inferno
+	/lib/ndb/common
+	/dis/emuinit.dis
+	/dis/sfgui/pgui.dis
+	/dis/sfgui/cache.dis
+	/dis/sfgui/timedio.dis
+	/dis/sfgui/images/banner.gif
+	/dis/sfgui/images/poppi-bomb.gif
+	/dis/sfgui/images/poppi-cpu.gif
+	/dis/sfgui/images/poppi-keyboard.gif
+	/dis/sfgui/images/poppi-nodeinfo.gif
+	/dis/sfgui/images/poppi-nodestderr.gif
+	/dis/sfgui/images/poppi-nodestdout.gif
+	/dis/sfgui/images/poppi-siminfo.gif
+	/dis/sfgui/images/poppi-straightjacket.gif
+	/dis/sfgui/images/poppi-typewriter.gif
+	/dis/sfgui/images/poppi-warning.gif
+	/dis/sfgui/images/splash.gif
+	/dis/lib/timers.dis
+	/dis/lib/arg.dis
+	/dis/lib/attrdb.dis
+	/dis/lib/auth.dis
+	/dis/lib/bufio.dis
+	/dis/lib/daytime.dis
+	/dis/lib/env.dis
+	/dis/lib/filepat.dis
+	/dis/lib/workdir.dis
+	/dis/lib/imageremap.dis
+	/dis/lib/ip.dis
+	/dis/lib/ipattr.dis
+	/dis/lib/readdir.dis
+	/dis/lib/readgif.dis
+	/dis/lib/regex.dis
+	/dis/lib/ssl.dis
+	/dis/lib/string.dis
+	/dis/lib/titlebar.dis
+	/dis/lib/url.dis
+	/dis/lib/wmclient.dis
+	/dis/lib/wmlib.dis
+	/dis/lib/wmsrv.dis
+	/dis/lib/lock.dis
+	/dis/lib/tkclient.dis
+	/dis/lib/selectfile.dis
+	/dis/lib/winplace.dis
+	/dis/lib/dialog.dis
+	/dis/lib/deflate.dis
+	/dis/lib/styx.dis
+	/dis/lib/styxlib.dis
+	/dis/lib/debug.dis
+	/dis/lib/dis.dis
+	/dis/ndb/cs.dis
+	/dis/ndb/dns.dis
+	/dis/webgrab.dis
+	/dis/shutdown
+	/dis/memfs.dis
+	/dis/cat.dis
+	/dis/echo.dis
+	/dis/stack.dis
+	/dis/mv.dis
+	/dis/cp.dis
+	/dis/cd.dis
+	/dis/rm.dis
+	/dis/sh.dis
+	/dis/styxlisten.dis
+	/dis/listen.dis
+	/dis/ls.dis
+	/dis/lc
+	/dis/kill.dis
+	/dis/ed.dis
+	/dis/gzip.dis
+	/dis/gunzip.dis
+	/dis/bind.dis
+	/dis/mount.dis
+	/dis/export.dis
+	/dis/ps.dis
+	/dis/sed.dis
+	/dis/netstat.dis
+	/dis/os.dis
+	/fonts/charon/bold.small.font
+		/fonts/lucida/latin1B.6.2
+		/fonts/lucida/EuroLatin.6.2
+		/fonts/lucida/Phonetic.6.2
+		/fonts/lucida/GenDiacrit.6.2
+		/fonts/lucida/cyrillic.6.2
+		/fonts/lucida/Hebrew.6.2
+		/fonts/lucida/GenPunct.6.2
+		/fonts/lucida/Letterlike.6.2
+		/fonts/lucida/MathOps1.6.2
+		/fonts/lucida/control.6.2
+		/fonts/lucida/Altshades.6.2
+		/fonts/lucida/FormBlock.6.2
+		/fonts/lucida/latin1CW.6.2
+	/fonts/lucidasans/boldlatin1.7.font
+		/fonts/lucidasans/lsb.12
+	/fonts/lucidasans/typelatin1.6.font
+		/fonts/lucidasans/lstr.10
+	/fonts/pelm/unicode.8.font
+		/fonts/pelm/latin1.8
+		/fonts/pelm/latineur.8
+		/fonts/lucm/ipa.9
+		/fonts/lucm/greek.9
+		/fonts/misc/cyrillic.9
+		/fonts/misc/genpunc.9
+		/fonts/pelm/supsub.9
+		/fonts/pelm/currency.9
+		/fonts/misc/letterlike.8
+		/fonts/misc/numbforms.9
+		/fonts/misc/arrows
+		/fonts/misc/math1
+		/fonts/misc/math2
+		/fonts/misc/tech
+		/fonts/misc/chart
+		/fonts/misc/geometric
+		/fonts/misc/ding
+		/fonts/misc/zapf
+		/fonts/jis/jis3000.16
+		/fonts/jis/katakana.16
+		/fonts/jis/hiragana.16
+		/fonts/jis/jis4e00.16
+		/fonts/jis/jis5000.16
+		/fonts/jis/jis5200.16
+		/fonts/jis/jis5400.16
+		/fonts/jis/jis5600.16
+		/fonts/jis/jis5800.16
+		/fonts/jis/jis5a00.16
+		/fonts/jis/jis5c00.16
+		/fonts/jis/jis5e00.16
+		/fonts/jis/jis6000.16
+		/fonts/jis/jis6200.16
+		/fonts/jis/jis6400.16
+		/fonts/jis/jis6600.16
+		/fonts/jis/jis6800.16
+		/fonts/jis/jis6a00.16
+		/fonts/jis/jis6c00.16
+		/fonts/jis/jis6e00.16
+		/fonts/jis/jis7000.16
+		/fonts/jis/jis7200.16
+		/fonts/jis/jis7400.16
+		/fonts/jis/jis7600.16
+		/fonts/jis/jis7800.16
+		/fonts/jis/jis7a00.16
+		/fonts/jis/jis7c00.16
+		/fonts/jis/jis7e00.16
+		/fonts/jis/jis8000.16
+		/fonts/jis/jis8200.16
+		/fonts/jis/jis8400.16
+		/fonts/jis/jis8600.16
+		/fonts/jis/jis8800.16
+		/fonts/jis/jis8a00.16
+		/fonts/jis/jis8c00.16
+		/fonts/jis/jis8e00.16
+		/fonts/jis/jis9000.16
+		/fonts/jis/jis9200.16
+		/fonts/jis/jis9400.16
+		/fonts/jis/jis9600.16
+		/fonts/jis/jis9800.16
+		/fonts/jis/jis9a00.16
+		/fonts/jis/jis9c00.16
+		/fonts/jis/jis9e00.16
+		/fonts/pelm/latin1.9
+		/fonts/pelm/fffd.9
+	/fonts/ttf2subf/luxisr/luxisr.14.font
+		/fonts/ttf2subf/luxisr/luxisr.14.0000
+		/fonts/ttf2subf/luxisr/luxisr.14.00ff
+		/fonts/ttf2subf/luxisr/luxisr.14.0218
+		/fonts/ttf2subf/luxisr/luxisr.14.0326
+		/fonts/ttf2subf/luxisr/luxisr.14.2010
+		/fonts/ttf2subf/luxisr/luxisr.14.2122
+		/fonts/ttf2subf/luxisr/luxisr.14.22c5
+		/fonts/ttf2subf/luxisr/luxisr.14.ea01
+		/fonts/ttf2subf/luxisr/luxisr.14.f001
+		/fonts/ttf2subf/luxisr/luxisr.14.f6be
+		/fonts/ttf2subf/luxisr/luxisr.14.fb01
+	/usr/sunflower/keyring/default
+	/icons/tk/ok.bit
