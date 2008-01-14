@@ -48,8 +48,8 @@ PFont,
 	PScrollBar,
 	PButton,
 	PFileDialog,
-	PG_CTRLUPARROW,
-	PG_CTRLDNARROW	: import pgui;
+	PG_LTARROW,
+	PG_RTARROW	: import pgui;
 Context,
 	Display,
 	Font,
@@ -92,23 +92,6 @@ Minx, Miny, Maxx, Maxy: con 1<<iota;
 Sminx, Sminy, Smaxx, Smaxy: con iota;
 Bdwidth: con 3;
 
-#	TODO: getrectborder is a waste: should just use Image.border to do borders
-
-#	TODO: to let you use a single Mgui to control/host multiple
-#	disjoint simulations, we need to put all the sim state into
-#	a single structure (like we started doing in myrmigki, and
-#	like for MguiState M above), so that sim becomes renetrant
-#	and maintains state for each instance wholly in a single
-#	structure. A new instance will of this structure will be created
-#	in response to a devattach() in devmyrmigki, and the attachspec
-#	for the devattach will be copied into the structure for future
-#	searching etc... So then when you do an attach and the attachspec
-#	you specify does not exist, you get a new simulation engine,
-#	but if it already exists, you get attached to that one.
-
-#	TODO: better customization of emu, take away emu flags / add our
-#	own for (1) selecting an auth certificate (2) selecting AUTO_Q
-#	and any of the other flags which are usually compiled in
 
 init(ctxt: ref Context, args: list of string)
 {
@@ -296,15 +279,6 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	winplace	= load Winplace Winplace->PATH;
 
 
-# bug: should check whether these loaded
-
-	tkclient->init();
-	selectfile->init();
-	dialog->init();
-	wmclient->init();
-	winplace->init();
-
-
 	#	So that fatal() etc. dont try to use an un-init graphics subsystem:
 	M.gui = 0;
 
@@ -315,6 +289,12 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 		fatal(sys->sprint("Could not load %s modules : %r\n",
 			"Draw/Wmsrv/Pgui/Tk/Tkclient/Slectfile/Dialog/Wmclient/Winplace"));
 	}
+
+	tkclient->init();
+	selectfile->init();
+	dialog->init();
+	wmclient->init();
+	winplace->init();
 
 	(there, dir) := sys->stat("/dev/draw");
 	if ((there == -1) || (dir.qid.qtype != Sys->QTDIR) || (dir.dtype != 'i'))
@@ -336,6 +316,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	}
 
 	M.display = ctxt.display;
+	M.ctxt = ctxt;
 
 	(ok, err) := pgui->init();
 	if (ok < 0)
@@ -389,7 +370,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	pmr = pmr.inset(MG_TEXTBOX_INSET);
 	(pmsgwin, e) = PScrollableText.new(M.screen,
 			pmr, MG_MSGS_FONT, MG_DFLT_TXTBUFLEN, Draw->White, Draw->White);
-	##		pmr, "/appl/myrmigki/ttf/LUCON.TTF", MG_DFLT_TXTBUFLEN,
+	##		pmr, "/appl/sfgui/fonts/ttf/LUCON.TTF", MG_DFLT_TXTBUFLEN,
 	##		Draw->White, Draw->White);
 
 	fatal(e);
@@ -507,7 +488,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	pauthorswin.settxtimg(M.display.color(MG_DEFAULT_AUTHORSCOLOR));
 	pauthorswin.setbgimg(M.display.color(Draw->Transparent));
 	pauthorswin.append(
-		"Authored, 1999-2008, by phillip stanley-marbell, <pstanley@ece.cmu.edu>\n");
+		"Authored, 1999-2008, by phillip stanley-marbell\n");
 	pauthorswin.append(
 		"Public key fingerprint 0884 DE6E E1F6 A201 023C 2E9B 7F9F FD41 AB2A 4587\n");
 	pauthorswin.append(
@@ -516,21 +497,22 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 
 
 	#	Icons and other graphics
-	br := get_bannerwinrect();
-	bannerwin := M.screen.newwindow(br, Draw->Refbackup, MG_DEFAULT_BGCOLOR);
-	pgui->drawimgfromfile(MG_BANNERIMG, br, bannerwin);
+	#br := get_bannerwinrect();
+	#bannerwin := M.screen.newwindow(br, Draw->Refbackup, MG_DEFAULT_BGCOLOR);
+	#pgui->drawimgfromfile(MG_BANNERIMG, br, bannerwin);
 
 	pgui->drawimgfromfile(MG_REMOTEIMG,
 		get_remotewinrect().inset(MG_TEXTBOX_INSET), M.display.image);
-	#pgui->drawimgfromfile(MG_KEYBOARDIMG,
-	#	get_inputwinrect().inset(MG_INPUTBOX_INSET).subpt((MG_INPUTRECT_HOFFSET, 0)),
-	#	M.display.image);
+	pgui->drawimgfromfile(MG_KEYBOARDIMG,
+		get_inputwinrect().inset(MG_INPUTBOX_INSET).subpt((MG_INPUTRECT_HOFFSET, 0)),
+		M.display.image);
 	pgui->drawimgfromfile(MG_WARNIMG,
 		get_sanitywinrect().inset(MG_TEXTBOX_INSET), M.display.image);
 	pgui->drawimgfromfile(MG_ERRORIMG,
 		get_errwinrect().inset(MG_TEXTBOX_INSET), M.display.image);
 
-	M.display.image.draw(br, bannerwin, nil, br.min);
+	#	For now, leave out the attempt to get a transparent banner...
+	#M.display.image.draw(br, bannerwin, nil, br.min);
 
 
 
@@ -542,7 +524,6 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	M.kbdchan	= chan of int;
 	M.msgschan 	= chan of string;
 	M.tpgymousechan	= chan of Pointer;
-	M.refreshchan	= chan of string;
 
 	M.tpgyfont	= Font.open(M.screen.display, MG_TPGY_FONT);
 	if (M.tpgyfont == nil)
@@ -1229,7 +1210,7 @@ tpgymousework(p: Pointer)
 		if (node.tpgyrect.contains(p.xy))
 		{
 			cmd_sethost(string node.nodehost.hostid);
-			spawn devmyrmigkicmd("setnode "+ string node.ID);
+			spawn devsunflowercmd("setnode "+ string node.ID);
 			break;
 		}
 
@@ -1244,18 +1225,21 @@ splash()
 	splashheight := splashimg.r.dy();
 	pmsgwin.layerwin.draw(pmsgwin.layerwin.r, M.display.white, nil, ZP);
 
-	M.refreshchan <-= "pause";
+	M.refresh = 0;
 	M.splashactive = 1;
 
 	##	Scroll the splash
 	for (i := 0; i <= splashheight && M.splashactive; i++)
 	{
 		pmsgwin.layerwin.draw(pmsgwin.layerwin.r, splashimg, nil, (0, i));
-		sys->sleep(100);
+		if (sys->sleep(100) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 	}
 
-	spawn devmyrmigkicmd("version");
-	M.refreshchan <-= "resume";
+	spawn devsunflowercmd("version");
+	M.refresh = 1;
 
 	return;
 }
@@ -1297,10 +1281,10 @@ kbd(kbd, sync : chan of int)
 #
 		case key
 		{
-		PG_CTRLDNARROW	=>
+		PG_LTARROW	=>
 			pmsgwin.scrollup(int (real pmsgwin.font.height() * pmsgwin.linespacing));
 
-		PG_CTRLUPARROW	=>
+		PG_RTARROW	=>
 			pmsgwin.scrolldn(int (real pmsgwin.font.height() * pmsgwin.linespacing));
 
 		*		=>	kbdbuf := pinputwin.update(key, (0, ZP, 0));
@@ -1360,7 +1344,10 @@ topologydisplay()
 		if (tmpnumnodes == 0)
 		{
 			tpgywin.draw(tpgywin.r, tpgywinbuf, nil, tpgywin.r.min);
-			sys->sleep(MG_SLOWPROC_SLEEP);
+			if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
+			{
+				error(sys->sprint("sleep failed: %r"));
+			}
 
 			continue;
 		}
@@ -1427,7 +1414,10 @@ topologydisplay()
 		M.setcachednodes(reorder(tmp2nodes));
 		tpgywin.draw(tpgywin.r, tpgywinbuf, nil, tpgywin.r.min);
 
-		sys->sleep(MG_SLOWPROC_SLEEP);
+		if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 	}
 }
 
@@ -1547,7 +1537,10 @@ nodeinfodisplay()
 
 		if (curhost == nil || curnode == nil)
 		{
-			sys->sleep(MG_FASTPROC_SLEEP);
+			if (sys->sleep(MG_FASTPROC_SLEEP))
+			{
+				error(sys->sprint("sleep failed: %r"));
+			}
 			continue;
 		}
 
@@ -1586,7 +1579,10 @@ nodeinfodisplay()
 		}
 
 		info = nil;
-		sys->sleep(MG_FASTPROC_SLEEP);
+		if (sys->sleep(MG_FASTPROC_SLEEP) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 	}
 }
 
@@ -1632,7 +1628,10 @@ remotedisplay()
 		prmtwin.append(remotehosts);
 		remotehosts = nil;
 
-		sys->sleep(MG_SLOWPROC_SLEEP);
+		if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 	}
 }
 
@@ -1795,33 +1794,41 @@ enginectl(path: string, sync : chan of int)
 
 
 			"pload"	=>
-				#	Takes a standard myrmigki config file, and 
+				#	Takes a standard sunflower config file, and 
 				#	sends chunks of it to different all remote hosts
 				#	(currently, using heuristics + round-robin)
 				#	if theres a single host, behavior is identical
-				#	to normal myrmigki load command. Future params
+				#	to normal sunflower load command. Future params
 				#	might be scheduling algorithms/policies, using
 				#	the yet-to-be-implemented /dev/perf
 				spawn pload(tl cmdlist);
 
 
 			"quit" or "q" =>
-				spawn devmyrmigkicmd("quit");
+				spawn devsunflowercmd("quit");
 				cleanexit();
+
+			"help" or "man" =>
+				devsunflowercmd(string writedata);
+
+				if ((len cmdlist) == 1)
+				{
+					echo(MG_HELP);
+				}
 
 			"echo"	=>
 				echo(string writedata[min(5, len writedata):]);
 			
-#			"save"	=>
-#				fname := selectfile->filename(M.ctxt, M.display.image, "", nil, ".");
-#
-#			"connectf" =>
-#				fname := selectfile->filename(M.ctxt, M.display.image,
-#						"", "*.mgh"::nil, ".");
-#				if (fname != nil)
-#				{
-#					spawn connectf(fname);
-#				}
+			#"save"	=>
+			#	fname := selectfile->filename(M.ctxt, M.display.image, "", nil, ".");
+
+			#"connectf" =>
+			#	fname := selectfile->filename(M.ctxt, M.display.image,
+			#			"", "*.mgh"::nil, ".");
+			#	if (fname != nil)
+			#	{
+			#		spawn connectf(fname);
+			#	}
 
 			*	=>
 				if ((hd cmdlist)[0] == '!')
@@ -1830,7 +1837,7 @@ enginectl(path: string, sync : chan of int)
 				}
 				else
 				{
-					spawn devmyrmigkicmd(string writedata);
+					spawn devsunflowercmd(string writedata);
 				}
 			}
 		}
@@ -1989,7 +1996,7 @@ splice(args : list of string)
 
 	#	We simply stream from netin to netout. All
 	#	other details are taken care of by respective
-	#	devmyrmigkis. We can't use sys->stream though.
+	#	devsunflowers. We can't use sys->stream though.
 	for (;;)
 	{
 		n = timedread(srchost.netoutfd, buf, len buf, MG_SMALL_TIMEOUT);
@@ -2154,7 +2161,7 @@ pload(args : list of string)
 }
 
 
-devmyrmigkicmd(cmd : string)
+devsunflowercmd(cmd : string)
 {
 #sys->print("curdevname = %s\ncurmntpt = %s, cmd = [%s]\n", M.curhost.devname, M.curhost.mntpt, cmd);
 
@@ -2198,17 +2205,19 @@ devmyrmigkicmd(cmd : string)
 
 fastrefreshproc()
 {
-	state := "resume";
-
-	for(;;) alt
+	while (1)
 	{
-	state = <-M.refreshchan	=>
-		;
-	*			=>
-		if (state == "resume")
+		if (M.refresh)
 		{
 			refreshoutput();
-			sys->sleep(MG_FASTPROC_SLEEP);
+			if (sys->sleep(MG_FASTPROC_SLEEP) < 0)
+			{
+				error(sys->sprint("sleep failed: %r"));
+			}
+		}
+		else if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
 		}
 	}
 }
@@ -2302,7 +2311,10 @@ eqtimeproc(maxinterval, maxskew_ms: int)
 	while (1)
 	{
 		eqtime(maxskew_ms);
-		sys->sleep(interval*1000);
+		if (sys->sleep(interval*1000) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 
 		if (interval < maxinterval)
 		{
@@ -2443,7 +2455,10 @@ eqrateproc(interval: int)
 	while (1)
 	{
 		eqrate();
-		sys->sleep(interval*1000);
+		if (sys->sleep(interval*1000) < 0)
+		{
+			error(sys->sprint("sleep failed: %r"));
+		}
 	}
 }
 
@@ -3333,7 +3348,7 @@ get_remotewinrect() : Rect
 	my := get_msgswinrect().dy();
 	iy := ir.dy();
 
-	winheight := wy - (2*MG_VBORDER_PIXELS + MG_HBORDER_PIXELS + my + iy);
+	winheight := wy - (2*MG_VBORDER_PIXELS + my + iy);
 	winheight = max(winheight, MG_MINHEIGHT);
 
 	min := ir.min.add((-MG_INPUTRECT_HOFFSET, ir.dy()+MG_VBORDER_PIXELS));
@@ -3354,7 +3369,7 @@ get_topologyrect() : Rect
 	winheight := int (real mguiwinrect.dy()*MG_TPGYWIN_VFRACT);
 	winheight = max(winheight, MG_MINHEIGHT);
 
-	min := mguiwinrect.min.add((2*MG_HBORDER_PIXELS+mr.dx(), MG_HBORDER_PIXELS));
+	min := mguiwinrect.min.add((2*MG_HBORDER_PIXELS+mr.dx(), 2*MG_HBORDER_PIXELS));
 	max := min.add((winwidth, winheight));
 
 
@@ -3392,7 +3407,7 @@ get_sanitywinrect() : Rect
 	winwidth = max(winwidth, MG_MINWIDTH);
 
 	winheight := (my - (tr.dy() + nr.dy() + 
-				3*MG_VBORDER_PIXELS + 2*MG_HBORDER_PIXELS))/2;
+				3*MG_VBORDER_PIXELS))/2;
 	winheight = max(winheight, MG_MINHEIGHT);
 
 	min := nr.min.add((0, nr.dy() + MG_VBORDER_PIXELS));
@@ -3422,16 +3437,13 @@ get_errwinrect() : Rect
 
 get_bannerwinrect() : Rect
 {
-	mguiwinrect := M.win.image.r;
 	er := get_errwinrect();
 
 	winwidth := er.dx();
-	winwidth = max(winwidth, MG_MINWIDTH);
 	winheight := MG_BBORDER_PIXELS;
 
 	min := er.min.add((0, er.dy() + MG_VBORDER_PIXELS));
 	max := min.add((winwidth, winheight));
-
 
 	return (min, max);
 }
@@ -3444,7 +3456,7 @@ get_authorwinrect() : Rect
 	winwidth := rr.dx();
 	winheight := MG_BBORDER_PIXELS;
 
-	min := rr.min.add((0, rr.dy() + 2*MG_HBORDER_PIXELS));
+	min := rr.min.add((0, rr.dy() + MG_VBORDER_PIXELS));
 	max := min.add((winwidth, winheight));
 
 	return (min, max);

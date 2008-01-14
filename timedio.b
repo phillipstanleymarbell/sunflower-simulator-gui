@@ -14,10 +14,10 @@ au	: Auth;
 
 Timer	: import timers;
 
-
 init(): string
 {
 	sys = load Sys Sys->PATH;
+	NOTIMERS = 1;
 
 	timers	= load Timers Timers->PATH;
 	readdir	= load Readdir Readdir->PATH;
@@ -32,9 +32,18 @@ init(): string
 	{
 		return sys->sprint("Could not init Auth module: %s", err);
 	}
-	timers->init(1);
+
+	if (!NOTIMERS)
+	{
+		timers->init(1);
+	}
 
 	return nil;
+}
+
+toggletimers()
+{
+	NOTIMERS ^= 1;
 }
 
 shutdown()
@@ -44,6 +53,11 @@ shutdown()
 	
 timedopen(file: string, omode, timeout: int): ref Sys->FD
 {
+	if (NOTIMERS)
+	{
+		return sys->open(file, omode);
+	}
+
 	rfd	: ref Sys->FD;
 	fdchan	:= chan of ref Sys->FD;
 	pidchan	:= chan of int;
@@ -78,6 +92,11 @@ open_worker(file: string, omode: int, fdchan: chan of ref Sys->FD, pidchan: chan
 
 timedread(fd: ref Sys->FD, buf: array of byte, nbytes, timeout: int): int
 {
+	if (NOTIMERS)
+	{
+		return sys->read(fd, buf, nbytes);
+	}
+
 	nchan	:= chan of int;
 	pidchan	:= chan of int;
 	n	:= -1;
@@ -113,6 +132,11 @@ read_worker(fd: ref Sys->FD, buf: array of byte, nbytes: int, nchan, pidchan: ch
 
 timedwrite(fd: ref Sys->FD, buf: array of byte, nbytes, timeout: int): int
 {
+	if (NOTIMERS)
+	{
+		return sys->write(fd, buf, nbytes);
+	}
+
 	nchan	:= chan of int;
 	pidchan	:= chan of int;
 	n	:= -1;
@@ -148,6 +172,11 @@ write_worker(fd: ref Sys->FD, buf: array of byte, nbytes: int, nchan, pidchan: c
 timedmount(fd: ref Sys->FD, afd: ref Sys->FD, old: string, flag: int, 
 				aname: string, timeout: int): int
 {
+	if (NOTIMERS)
+	{
+		return sys->mount(fd, afd, old, flag, aname);
+	}
+
 	nchan	:= chan of int;
 	pidchan	:= chan of int;
 	n	:= -1;
@@ -183,6 +212,11 @@ mount_worker(fd: ref Sys->FD, afd: ref Sys->FD, old: string, flag: int,
 
 timedunmount(name, old: string, timeout: int): int
 {
+	if (NOTIMERS)
+	{
+		return sys->unmount(name, old);
+	}
+
 	nchan	:= chan of int;
 	pidchan	:= chan of int;
 	n	:= -1;
@@ -217,6 +251,11 @@ unmount_worker(name, old: string, nchan, pidchan: chan of int)
 
 timedreaddir(path: string, sortkey, timeout: int): (array of ref Sys->Dir, int)
 {
+	if (NOTIMERS)
+	{
+		return readdir->init(path, sortkey);
+	}
+
 	rchan	:= chan of (array of ref Sys->Dir, int);
 	dirs	: array of ref Sys->Dir;
 	pidchan	:= chan of int;
@@ -254,6 +293,11 @@ readdir_worker(path: string, sortkey: int, rchan: chan of (array of ref Sys->Dir
 timedauclient(alg: string, ai: ref Keyring->Authinfo, fd: ref Sys->FD,
 				timeout: int): (ref Sys->FD, string)
 {
+	if (NOTIMERS)
+	{
+		return au->client(alg, ai, fd);
+	}
+
 	rchan	:= chan of (ref Sys->FD, string);
 	rfd	: ref Sys->FD;
 	pidchan	:= chan of int;
@@ -291,6 +335,11 @@ auclient_worker(alg: string, ai: ref Keyring->Authinfo, fd: ref Sys->FD,
 
 timeddial(addr, local: string, timeout: int): (int, Sys->Connection)
 {
+	if (NOTIMERS)
+	{
+		return sys->dial(addr, local);
+	}
+
 	rchan	:= chan of (int, Sys->Connection);
 	pidchan	:= chan of int;
 	rc	: Sys->Connection;

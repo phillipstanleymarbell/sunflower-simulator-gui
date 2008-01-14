@@ -3,6 +3,7 @@ Mgui: module
 	MG_DEVCHAR		: con 'j';
 	MG_CONTROLLER_SHAREDPATH: con "shared/";
 
+	MG_HELP			: con "\nUse the left and right arrow keys to scroll up and down respectively\n";
 	MG_PROMPT		: con "->>  ";
 	MG_FLATTABS		: con "        ";
 	MG_INPUT_FONT		: con "/fonts/lucidasans/boldlatin1.7.font";
@@ -18,7 +19,7 @@ Mgui: module
 	MG_BIG_BANNER_FONT	: con "/fonts/lucidasans/typelatin1.7.font";
 	MG_BIG_NODEINFO_FONT	: con "/fonts/lucidasans/typelatin1.7.font";
 	MG_AUTHORS_FONT		: con "/fonts/lucidasans/typelatin1.6.font";	##"/appl/myrmigki/ttf/luxisr.ttf";
-	MG_BANNERIMG		: con "/dis/sfgui/images/banner.png";
+	MG_BANNERIMG		: con "/dis/sfgui/images/banner.gif";
 	MG_ANTSIMG		: con "/dis/sfgui/images/ants.gif";
 	MG_REMOTEIMG		: con "/dis/sfgui/images/poppi-cpu.gif";
 	MG_KEYBOARDIMG		: con "/dis/sfgui/images/poppi-keyboard.gif";
@@ -80,8 +81,8 @@ Mgui: module
 	MG_DFLT_AUTHNLINES	: con 4;
 
 	#	Delays for fast/slow refresh threads
-	MG_FASTPROC_SLEEP	: con 100;
-	MG_SLOWPROC_SLEEP	: con 300;
+	MG_FASTPROC_SLEEP	: con 200;
+	MG_SLOWPROC_SLEEP	: con 500;
 
 	#	Timeouts in microseconds
 	MG_SMALL_TIMEOUT	: con 30000000;
@@ -107,7 +108,6 @@ Mgui: module
 		kbdchan		: chan of int;
 		msgschan	: chan of string;
 		rmtchan		: chan of string;
-		refreshchan	: chan of string;
 		tpgymousechan	: chan of Pointer;
 
 		#	References to state allocated on a display
@@ -117,10 +117,12 @@ Mgui: module
 		remotehostsfont	: ref Font;
 		tpgyfont	: ref Font;
 		display		: ref Display;
+		ctxt		: ref Context;
 		screen		: ref Screen;
 		win		: ref Wmclient->Window;
 
 		#	Misc.
+		refresh		: int;
 		controlled	: int;
 		stderr		: ref Sys->FD;
 		splashactive	: int;

@@ -1,6 +1,7 @@
 TimedIO : module
 {
 	PATH		: con "/dis/sfgui/timedio.dis";
+	NOTIMERS	: int;
 
 	timedopen	: fn(file: string, omode, timeout: int): ref Sys->FD;
 	timedread	: fn(fd: ref Sys->FD, buf: array of byte, nbytes, timeout: int): int;
@@ -14,5 +15,6 @@ TimedIO : module
 	timeddial	: fn(addr, local: string, timeout: int): (int, Sys->Connection);
 
 	init		: fn(): string;
+	toggletimers	: fn();
 	shutdown	: fn();
 };
