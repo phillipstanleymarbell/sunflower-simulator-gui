@@ -1,3 +1,16 @@
+(0) When compiling, configure the emu tree to build the powerpc and i386
+	versions separately (easier to do it in separate passes since the
+	ASM is arch specific etc.). Need to edit both mkconfig and the
+	emu/MacOSX/configfile (sflr-specific config in this case).
+	
+	after bulding the two binaries separately, use the lipo tool to
+	generate a universal binary:
+
+	lipo -arch ppc o.sfgui-darwin.ppc -arch i386 o.sfgui-darwin.386 -create -output o.sfgui-darwin.universal
+
+
+	that then gets copied into the templace .app bundle
+
 (1)
 diff -r inferno/module/wmsrv.m /Users/pip/infernoR420060303/module/wmsrv.m
 13c13
@@ -45,11 +58,11 @@ diff -r inferno/emu/port/alloc.c /Users/pip/infernoR420060303/emu/port/alloc.c
 
 51,53c51,53
 
-< 		{ "main",  0, 	128*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+< 		{ "main",  0, 	512*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
 
-< 		{ "heap",  1, 	128*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
+< 		{ "heap",  1, 	512*1024*1024, 31,  512*1024, 0, 31*1024*1024 },
 
-< 		{ "image", 2,   128*1024*1024+256, 31, 4*1024*1024, 1, 31*1024*1024 },
+< 		{ "image", 2,   512*1024*1024+256, 31, 4*1024*1024, 1, 31*1024*1024 },
 
 ---
 

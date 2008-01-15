@@ -416,10 +416,12 @@ PScrollableText.getlayerimg(p: self ref PScrollableText) : ref Image
 
 PScrollableText.top(p: self ref PScrollableText)
 {
+	p.layerwin.top();
 }
 
 PScrollableText.bottom(p: self ref PScrollableText)
 {
+	p.layerwin.bottom();
 }
 
 PScrollableText.hide(p: self ref PScrollableText)

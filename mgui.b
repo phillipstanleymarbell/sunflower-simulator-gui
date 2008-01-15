@@ -253,7 +253,9 @@ sys->print("1");
 
 	#	Walk the device to pick up the node and lists
 	M.setcachedhosts(getdevhostlist());
-	M.setcachednodes(getdevnodelist());
+
+	#	Don't call setcachednodes though, because it needs gui init to be done (easier that way)
+#	M.setcachednodes(getdevnodelist());
 
 	tmp := M.getcachedhosts();
 	if (tmp == nil)
@@ -276,6 +278,25 @@ sys->print("1");
 		spawn guiinit(ctxt, sync);
 		<-sync;
 	}
+}
+
+allocmsgwin() : ref PScrollableText
+{
+	mr := get_msgswinrect();
+	pmr := Rect (mr.min.add((MG_INPUTRECT_HOFFSET, 0)), mr.max);
+	pmr = pmr.inset(MG_TEXTBOX_INSET);
+	(msgwin, e) := PScrollableText.new(M.screen,
+			pmr, MG_MSGS_FONT, MG_DFLT_TXTBUFLEN, Draw->White, Draw->White);
+	##		pmr, "/appl/sfgui/fonts/ttf/LUCON.TTF", MG_DFLT_TXTBUFLEN,
+	##		Draw->White, Draw->White);
+
+	fatal(e);
+
+	msgwin.setlinespacing(MG_DEFAULT_LINESPACING);
+	msgwin.autoscroll = 1;
+	msgwin.settxtimg(M.display.color(Draw->Black));
+
+	return msgwin;
 }
 
 guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
@@ -371,24 +392,16 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	#
 	e := "";
 
-	#	Msgs window
+
+	#	Global msgs window reference is pmsg. It is updated when we set the current node
 	mr := get_msgswinrect();
 	msgsbgwin := M.screen.newwindow(mr, Draw->Refbackup, Draw->White);
 	M.display.image.draw(mr, msgsbgwin, nil, mr.min);
 	mrborder := pgui->getrectborder(mr);
 	M.display.image.poly(mrborder, Draw->Enddisc, Draw->Enddisc,
 			MG_WINBORDER_PIXELS, M.display.color(MG_DEFAULT_BORDERCOLOR), mr.min);
-	pmr := Rect (mr.min.add((MG_INPUTRECT_HOFFSET, 0)), mr.max);
-	pmr = pmr.inset(MG_TEXTBOX_INSET);
-	(pmsgwin, e) = PScrollableText.new(M.screen,
-			pmr, MG_MSGS_FONT, MG_DFLT_TXTBUFLEN, Draw->White, Draw->White);
-	##		pmr, "/appl/sfgui/fonts/ttf/LUCON.TTF", MG_DFLT_TXTBUFLEN,
-	##		Draw->White, Draw->White);
-
-	fatal(e);
-	pmsgwin.setlinespacing(MG_DEFAULT_LINESPACING);
-	pmsgwin.autoscroll = 1;
-	pmsgwin.settxtimg(M.display.color(Draw->Black));
+	pmsgwin = allocmsgwin();
+	#pmsgwin = M.getcurnode().msgwin;
 
 
 	#
@@ -561,6 +574,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	spawn splash();
 
 	guiinitsync <-= 0;
+	M.guiinit = 1;
 
 	for (;;)
 	alt
@@ -1424,6 +1438,13 @@ topologydisplay()
 			tmp2nodes = tmpnode :: tmp2nodes;
 			tmpnodes = tl tmpnodes;
 		}
+
+		#
+		#	M.setcachednodes is careful to retain information that we store in the
+		#	list over time, in particular, the Nodeinfo.msgwin, and it will allocate
+		#	a new msgwin if a new node is found. M.setcachednodes will update the
+		#	curnode with a ref to a Nodeinfo with an alloc'd msgwin
+		#
 		M.setcachednodes(reorder(tmp2nodes));
 		tpgywin.draw(tpgywin.r, tpgywinbuf, nil, tpgywin.r.min);
 
@@ -1550,7 +1571,7 @@ nodeinfodisplay()
 
 		if (curhost == nil || curnode == nil)
 		{
-			if (sys->sleep(MG_FASTPROC_SLEEP))
+			if (sys->sleep(MG_SLOWPROC_SLEEP))
 			{
 				error(sys->sprint("sleep failed: %r"));
 			}
@@ -1592,7 +1613,7 @@ nodeinfodisplay()
 		}
 
 		info = nil;
-		if (sys->sleep(MG_FASTPROC_SLEEP) < 0)
+		if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
 		{
 			error(sys->sprint("sleep failed: %r"));
 		}
@@ -2428,7 +2449,7 @@ eqtime(maxskew_ms: int)
 		#	The Tcpu across nodes shouldn't vary by more
 		#	than a simulated machine clock cycletime.
 		#
-		for (nodelist := host.gethostnodes();
+		for (nodelist := host.getparsednodes();
 			nodelist != nil; nodelist = tl nodelist)
 		{
 			node := hd nodelist;
@@ -2555,7 +2576,7 @@ eqrate()
 		nrate_sum	:= 0.0;
 		actual_rate	:= 0.0;
 
-		for (nodelist := host.gethostnodes();
+		for (nodelist := host.getparsednodes();
 			nodelist != nil; nodelist = tl nodelist)
 		{
 			node := hd nodelist;
@@ -3067,6 +3088,7 @@ fatal(s: string)
 			"Mgui Fatal: %s\nExiting...\n", s);
 
 	cleanexit();
+	while (1) ;
 }
 
 errorbox(msg : string, font : ref Font, bgcolor, txtcolor: int)
@@ -3223,10 +3245,87 @@ MguiState.getcachednodes() : list of ref Nodeinfo
 	return x;
 }
 
-MguiState.setcachednodes(nodelist : list of ref Nodeinfo)
+inl(node: ref Nodeinfo, nodelist: list of ref Nodeinfo) : ref Nodeinfo
 {
+	#	We check both host and ctlfd for a match. We really only
+	#	need to check the ctlfd (host would not be enough though)
+	tmp := nodelist;
+	while (tmp != nil)
+	{
+		n := hd tmp;
+
+		if (n.nodehost.hostname == node.nodehost.hostname && n.ID == node.ID)
+		{
+			return n;
+		}
+		tmp = tl tmp;
+	}
+
+	return nil;
+}
+
+MguiState.setcachednodes(nodelist: list of ref Nodeinfo)
+{
+	#
+	#	Be careful to retain information that we store in the
+	#	list over time, in particular, the Nodeinfo.msgwin,
+	#	and allocate a new msgwin if a new node is found.
+	#
+
 	M.sem_cachednodes.obtain();
-	M.cachednodes = nodelist;
+
+	#	First, keep only items already in cache which are on incoming list
+	tmp := M.cachednodes;
+	M.cachednodes = nil;
+	while (tmp != nil)
+	{
+		node := hd tmp;
+		if ((x := inl(node, nodelist)) != nil)
+		{
+			#	Save the msgwin, replace all other info
+			tmpwin := node.msgwin;
+			node = x;
+			node.msgwin = tmpwin;
+			M.cachednodes = node :: M.cachednodes;
+		}
+		tmp = tl tmp;
+	}
+
+	#	Then, add any new items from incoming list
+	tmp = nodelist;
+	while (tmp != nil)
+	{
+		node := hd tmp;
+		if (inl(node, M.cachednodes) == nil)
+		{
+			#	If M.win is set, then enough of gui is init
+			if (M.gui && M.guiinit)
+			{
+				node.msgwin = allocmsgwin();
+
+				#	BUG: we do this now, while we are still fleshing out the multi-scroltextwins thing
+				#	Lower the newly allocated window to bottom of stack by default
+				node.msgwin.bottom();
+			}
+
+			M.cachednodes = node :: M.cachednodes;
+		}
+		tmp = tl tmp;
+	}
+
+	tmp = M.cachednodes;
+	while (tmp != nil)
+	{
+		node := hd tmp;
+		if (node.iscurnode)
+		{
+			#	Update the window to which we should draw, if necessary
+			pmsgwin = node.msgwin;
+			pmsgwin.top();
+		}
+		tmp = tl tmp;
+	}
+
 	M.sem_cachednodes.release();
 }
 
@@ -3294,7 +3393,7 @@ Host.getcurnodeid(me: self ref Host) : int
 }
 
 
-Host.gethostnodes(me: self ref Host) : list of ref Nodeinfo
+Host.getparsednodes(me: self ref Host) : list of ref Nodeinfo
 {
 	nodelist	: list of ref Nodeinfo;
 	buf		:= array [Sys->ATOMICIO] of byte;
@@ -3303,7 +3402,7 @@ Host.gethostnodes(me: self ref Host) : list of ref Nodeinfo
 	(nodedirs, nnodedirs) := timedreaddir(me.mntpt, Readdir->NONE, MG_SMALL_TIMEOUT);
 	if (nnodedirs < 0)
 	{
-		error(sys->sprint("Host.gethostnodes: Error reading %s: %r", me.mntpt));
+		error(sys->sprint("Host.getparsednodes: Error reading %s: %r", me.mntpt));
 		return nil;
 	}
 
@@ -3358,7 +3457,9 @@ Nodeinfo.new() : ref Nodeinfo
 		Rect(ZP, ZP),	#	tpgyrect	: Draw->Rect;
 		nil,		#	nodehost	: cyclic ref Host;
 		nil,		#	nodectlfd	: ref Sys->FD;
-		0);		#	iscurnode	: int;	
+		0,		#	iscurnode	: int;	
+		nil);		#	msgwin		: ref PScrollableText;
+
 }
 
 parsenodeinfo(ctlpath: string) : ref Nodeinfo

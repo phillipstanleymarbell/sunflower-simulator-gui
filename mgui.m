@@ -6,7 +6,7 @@ Mgui: module
 	MG_HELP			: con	"\nUse the left and right arrow keys to scroll up and down respectively\n"+
 					"Additional GUI-only commands are:\n\n"+
 					"   @<hostname|hostid> <command>       Execute <command> remotely\n"+		
-					"   !<Inferno command>                 Execute Inferno command, e.g., \"!ps\"\n"+		
+					"   !<Inferno command>                 Exec. Inferno command, e.g., \"!ps\"\n"+		
 					"   onlyactive                         Toggle disp. of only active nodes\n"+
 					"   about                              Display splash screen\n"+
 					"   connect <host> [cert [alg]]        Connect to remote engine\n"+
@@ -90,8 +90,8 @@ Mgui: module
 	MG_DEFAULT_LINESPACING	: con 1.0;
 
 	#	Default history buffer length. Makes no sense to be
-	#	larger than the circular buffers in Myrmigki
-	MG_DFLT_TXTBUFLEN	: con 1024;
+	#	larger than the circular buffers in Sunflower
+	MG_DFLT_TXTBUFLEN	: con 128;
 	MG_DFLT_ERRBUFLEN	: con 128;
 	MG_DFLT_REMOTEBUFLEN	: con 128;
 	MG_DFLT_AUTHNLINES	: con 4;
@@ -143,6 +143,7 @@ Mgui: module
 		stderr		: ref Sys->FD;
 		splashactive	: int;
 		gui 		: int;
+		guiinit		: int;
 		daemonized	: int;
 		pgrp		: int;
 		onlyactive	: int;
@@ -214,6 +215,7 @@ Mgui: module
 		nodehost	: ref Host;
 		nodectlfd	: ref Sys->FD;
 		iscurnode	: int;
+		msgwin		: ref PScrollableText;
 
 		new		: fn() : ref Nodeinfo;
 	};
@@ -234,7 +236,7 @@ Mgui: module
 		cachedthrottle	: int;
 		cachedTcpu	: real;
 
-		gethostnodes	: fn(me: self ref Host) : list of ref Nodeinfo;
+		getparsednodes	: fn(me: self ref Host) : list of ref Nodeinfo;
 		getcurnodeid	: fn(me: self ref Host) : int;
 	};
 	
