@@ -154,6 +154,10 @@ root
 	/dis/lib/styxlib.dis
 	/dis/lib/debug.dis
 	/dis/lib/dis.dis
+	/dis/lib/styxpersist.dis
+	/dis/lib/factotum.dis
+	/dis/lib/rand.dis
+	/dis/lib/random.dis
 	/dis/ndb/cs.dis
 	/dis/ndb/dns.dis
 	/dis/webgrab.dis

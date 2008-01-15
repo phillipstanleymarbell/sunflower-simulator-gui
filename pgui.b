@@ -842,8 +842,10 @@ getimgfromfile(filename : string, display : ref Display) : (ref Image, string)
 
 getrectborder(r : Rect) : array of Point
 {
-#	TODO: this is a waste: should just use Image.border to do borders
-
+	#
+	#	This seems like a waste: for Images, we can just use Image.border to do
+	#	borders but we might need this for Rects in the general case
+	#
 	return array [] of {	r.min, r.min.add((r.dx()-1, 0)),
 				r.max.sub((1,1)), r.min.add((0, r.dy()-1)), r.min};
 }

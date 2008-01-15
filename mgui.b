@@ -8,6 +8,7 @@ include "pgui.m";
 include "string.m";
 include "keyring.m";
 include "security.m";
+include "styxpersist.m";
 include "tk.m";
 include "wmsrv.m";
 include "wmclient.m";
@@ -40,6 +41,7 @@ pgui			: Pgui;
 timedio			: TimedIO;
 draw			: Draw;
 cache			: Cache;
+random			: Random;
 PFont,
 	ZP,
 	PTextEntry,
@@ -104,11 +106,12 @@ init(ctxt: ref Context, args: list of string)
 	lock	= load Lock Lock->PATH;
 	timedio	= load TimedIO TimedIO->PATH;
 	cache	= load Cache Cache->PATH;
+	random	= load Random Random->PATH;
 
-	if (str == nil || bufio == nil || lock == nil || timedio == nil || cache == nil)
+	if (str == nil || bufio == nil || lock == nil || timedio == nil || cache == nil || random == nil)
 	{
 		fatal(sys->sprint(
-			"Could not load String/Bufio/Readdir/Lock/TimedIO/Cache modules: %r."));
+			"Could not load String/Bufio/Readdir/Lock/TimedIO/Cache/Random modules: %r."));
 	}
 
 	if ((err := timedio->init()) != nil)
@@ -124,6 +127,7 @@ init(ctxt: ref Context, args: list of string)
 	M.pgrp = sys->pctl(Sys->NEWPGRP|Sys->FORKNS, nil);
 	M.stderr = sys->fildes(2);
 	M.gui = 1;
+	M.engineid = random->randomint(Random->ReallyRandom);
 
 	tmpfd := sys->open("#e/emuroot", Sys->OREAD);
 	if (tmpfd == nil)
@@ -163,7 +167,7 @@ init(ctxt: ref Context, args: list of string)
 		fatal(sys->sprint("Could not read #e/emuargs: %r"));
 	}
 	status(sys->sprint("Run with host args \"%s\"", string buf[:n]));
-
+sys->print("1");
 	#	Get rid of program name
 	(nil, emuargs) := str->splitstrl(string buf[:n], " ");
 
@@ -191,6 +195,10 @@ init(ctxt: ref Context, args: list of string)
 	if (there == -1)
 	{
 		cs := load Command "/dis/ndb/cs.dis";
+		if (cs == nil)
+		{
+			fatal("Could not load /dis/ndb/cs.dis");
+		}
 		cs->init(nil, "cs"::nil);
 	}
 
@@ -198,6 +206,10 @@ init(ctxt: ref Context, args: list of string)
 	if (there == -1)
 	{
 		dns := load Command "/dis/ndb/dns.dis";
+		if (dns == nil)
+		{
+			fatal("Could not load /dis/ndb/dns.dis");
+		}
 		dns->init(nil, "dns"::nil);
 	}
 
@@ -219,7 +231,7 @@ init(ctxt: ref Context, args: list of string)
 	status(sys->sprint("Local host name is \"%s\"", hostname));
 	status("Attaching local simulation engine...");
 
-	if (sys->bind("#*sunflower!"+hostname, MG_MNTDIR, sys->MBEFORE) < 0)
+	if (sys->bind("#*sunflower!"+hostname+sys->sprint(".%uX", M.engineid), MG_MNTDIR, sys->MBEFORE) < 0)
 	{
 		fatal("Could not attach local simulation engine:"+
 			sys->sprint("%r"));
@@ -236,7 +248,7 @@ init(ctxt: ref Context, args: list of string)
 	ls->init(nil, "ls"::"-ls"::MG_MNTDIR::nil);
 
 	sync := chan of int;
-	spawn enginectl(MG_MNTDIR+"sunflower."+hostname, sync);
+	spawn enginectl(MG_MNTDIR+"sunflower."+hostname+sys->sprint(".%uX", M.engineid), sync);
 	<- sync;
 
 	#	Walk the device to pick up the node and lists
@@ -488,9 +500,9 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	pauthorswin.settxtimg(M.display.color(MG_DEFAULT_AUTHORSCOLOR));
 	pauthorswin.setbgimg(M.display.color(Draw->Transparent));
 	pauthorswin.append(
-		"Authored, 1999-2008, by phillip stanley-marbell\n");
+		"Sunflower simulator GUI.  Authored, 2004-2008, by phillip stanley-marbell\n");
 	pauthorswin.append(
-		"Public key fingerprint 0884 DE6E E1F6 A201 023C 2E9B 7F9F FD41 AB2A 4587\n");
+		"Public key fingerprint 62A1 E95D 304D 9876 D5B1  1FB2 BF7E B65F BD89 20AB\n");
 	pauthorswin.append(
 		"This software is provided with ABSOLUTELY NO WARRANTY. Read LICENSE.txt\n");
 
@@ -1210,7 +1222,7 @@ tpgymousework(p: Pointer)
 		if (node.tpgyrect.contains(p.xy))
 		{
 			cmd_sethost(string node.nodehost.hostid);
-			spawn devsunflowercmd("setnode "+ string node.ID);
+			spawn devsunflowercmd(M.getcurhost(), "setnode "+ string node.ID);
 			break;
 		}
 
@@ -1238,7 +1250,7 @@ splash()
 		}
 	}
 
-	spawn devsunflowercmd("version");
+	spawn devsunflowercmd(M.localhost, "version");
 	M.refresh = 1;
 
 	return;
@@ -1253,7 +1265,8 @@ services()
 	#	Should use Styxlisten to multiplex port ?
 	listen := load Command "/dis/listen.dis";
 	listen->init(nil,
-		"listen"::"-v"::"-k"::"/usr/sunflower/keyring/default"::
+	#	"listen"::"-v"::"-k"::"/usr/sunflower/keyring/default"::
+		"listen"::"-v"::"-A"::
 		"tcp!*!9999"::"export"::MG_MNTDIR::nil);
 
 	status("Ready to accept connections from remote hosts.");
@@ -1657,7 +1670,7 @@ enginectl(path: string, sync : chan of int)
 	chanref := sys->file2chan(path, "enginectl");
 	if (chanref == nil)
 	{
-		fatal(sys->sprint("Could not create %senginectl: %r\n", path));
+		fatal(sys->sprint("Could not create %s/enginectl: %r\n", path));
 	}
 
 	sync <-= 0;
@@ -1727,16 +1740,48 @@ enginectl(path: string, sync : chan of int)
 
 				spawn cmd_sethost(hd tl cmdlist);
 			
+#BUG: the atctl won't quite work since the remove node currently does not cross-mount us
 			"splice"	=>
-				spawn cmd_splice(cmdlist);
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					#
+					#	Need to spawn atctl as it could potentially try
+					#	to write into the same file as we're serving
+					#
+					spawn atctl("splice", tl cmdlist);
+				}
+				else
+				{
+					spawn cmd_splice(cmdlist);
+				}
 			
 			"splicestar"	=>
-				spawn cmd_splice("splice"::"*"::nil);
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					spawn atctl("splice *", tl cmdlist);
+				}
+				else
+				{
+					spawn cmd_splice("splice"::"*"::nil);
+				}
 
 			"eqrate"	=>
-				spawn eqrate();
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					spawn atctl("eqrate", tl cmdlist);
+				}
+				else
+				{
+					spawn eqrate();
+				}
 
 			"eqrateproc"	=>
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					spawn atctl("eqrateproc", tl cmdlist);
+				}
+				else
+				{
 					interval := 60;
 					if (len cmdlist != 2)
 					{
@@ -1750,8 +1795,14 @@ enginectl(path: string, sync : chan of int)
 					}
 
 					spawn eqrateproc(interval);
-
+				}
 			"eqtime"	=>
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					spawn atctl("eqtime", tl cmdlist);
+				}
+				else
+				{
 					maxskew_ms := 10;
 
 					if (len cmdlist != 2)
@@ -1767,8 +1818,14 @@ enginectl(path: string, sync : chan of int)
 					}
 
 					spawn eqtime(maxskew_ms);
-
+				}
 			"eqtimeproc"	=>
+				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
+				{
+					spawn atctl("eqtimeproc", tl cmdlist);
+				}
+				else
+				{
 					maxskew_ms := 10;
 					interval := 30;
 
@@ -1787,7 +1844,7 @@ enginectl(path: string, sync : chan of int)
 					}
 
 					spawn eqtimeproc(interval, maxskew_ms);
-
+				}
 
 			"restart"	=>
 					spawn cmd_restart(M.savedargs);
@@ -1805,11 +1862,11 @@ enginectl(path: string, sync : chan of int)
 
 
 			"quit" or "q" =>
-				spawn devsunflowercmd("quit");
+				spawn devsunflowercmd(M.localhost, "quit");
 				cleanexit();
 
 			"help" or "man" =>
-				devsunflowercmd(string writedata);
+				devsunflowercmd(M.localhost, string writedata);
 
 				if ((len cmdlist) == 1)
 				{
@@ -1821,7 +1878,7 @@ enginectl(path: string, sync : chan of int)
 			
 			#"save"	=>
 			#	fname := selectfile->filename(M.ctxt, M.display.image, "", nil, ".");
-
+			#
 			#"connectf" =>
 			#	fname := selectfile->filename(M.ctxt, M.display.image,
 			#			"", "*.mgh"::nil, ".");
@@ -1835,15 +1892,37 @@ enginectl(path: string, sync : chan of int)
 				{
 					spawn runcmd((hd cmdlist)[1:]:: tl cmdlist);
 				}
+				else if ((hd cmdlist)[0] == '@')
+				{
+					spawn atctl(nil, tl cmdlist);
+				}
 				else
 				{
-					spawn devsunflowercmd(string writedata);
+					spawn devsunflowercmd(M.getcurhost(), string writedata);
 				}
 			}
 		}
 	}
 
 	return;
+}
+
+atctl(cmd: string, arglist: list of string)
+{
+	(nil, hostname) := str->splitstrr(hd arglist, "@");
+	if (hostname == nil)
+	{
+		hostname = "0";
+	}
+
+	host := name2host(hostname);
+	if (host == nil)
+	{
+		host = M.localhost;
+	}
+
+	#	convert to ordinary local splice, send to remote enginectl
+	sys->fprint(host.enginectlfd, "%s\n", str->quoted(cmd::(tl arglist)));
 }
 
 cmd_splice(cmdlist : list of string)
@@ -2161,27 +2240,26 @@ pload(args : list of string)
 }
 
 
-devsunflowercmd(cmd : string)
+devsunflowercmd(host: ref Host, cmd: string)
 {
 #sys->print("curdevname = %s\ncurmntpt = %s, cmd = [%s]\n", M.curhost.devname, M.curhost.mntpt, cmd);
 
-	curhost := M.getcurhost();
-	curnodeid := curhost.getcurnodeid();
+	curnodeid := host.getcurnodeid();
 	if (curnodeid < 0)
 	{
 		error("Could not determine host's current node.");
-		M.deletehost(curhost);
+		M.deletehost(host);
 
 		return;
 	}
 
-	ctlpath := curhost.mntpt+string curnodeid+"/ctl";
+	ctlpath := host.mntpt+string curnodeid+"/ctl";
 
 	fd := timedopen(ctlpath, sys->OWRITE, MG_SMALL_TIMEOUT);
 	if (fd == nil)
 	{
 		error(sys->sprint("Could not open %s: %r", ctlpath));
-		M.deletehost(curhost);
+		M.deletehost(host);
 
 		return;
 	}
@@ -2190,7 +2268,7 @@ devsunflowercmd(cmd : string)
 	if (timedwrite(fd, cmdarray, len cmdarray, MG_SMALL_TIMEOUT) < 0)
 	{
 		error(sys->sprint("Could not write to %s: %r", ctlpath));
-		M.deletehost(curhost);
+		M.deletehost(host);
 
 		return;
 	}
@@ -2745,77 +2823,55 @@ connectf(hostsfile : string)
 	return;
 }
 
+dialler(dialc: chan of chan of ref Sys->FD, dest: string)
+{
+	while((reply := <-dialc) != nil)
+	{
+		(ok, c) := sys->dial(dest, nil);
+		if(ok == -1)
+		{
+			reply <-= nil;
+			continue;
+		}
+		reply <-= c.dfd;
+	}
+}
+
 attachremote(args: list of string, path: string) : int
 {
 	status("Connecting...");
 
+	styxpersist := load Styxpersist Styxpersist->PATH;
+	if(styxpersist == nil)
+	{
+		error(sys->sprint("Could not load %s: %r", Styxpersist->PATH));
+		return -1;
+	}
+	sys->pipe(p := array[2] of ref Sys->FD);
+	(c, err) := styxpersist->init(p[0], 0, nil);
+	if(c == nil)
+	{
+		error("Styxpersist: "+err);
+		return -1;
+	}
+
+
 	addr := hd args;
-	(ok, c) := timeddial(netmkaddr(addr, "tcp", "9999"), nil, MG_SMALL_TIMEOUT);
-	if(ok < 0)
-	{
-		error("Connection failed: "+sys->sprint("%r"));
-		return -1;
-	}
+	spawn dialler(c, netmkaddr(addr, "tcp", "9999"));
 
-	status("Authenticating (SHA-1,RC4)...");
-	alg := "sha/rc4";
-	if (len args == 3)
-	{
-		alg = hd tl tl args;
-	}
 
-	kr := load Keyring Keyring->PATH;
-	if(kr == nil)
-	{
-		error("Could not load Keyring module: "+sys->sprint("%r"));
-		return -1;
-	}
-
-	kd := "/usr/sunflower/keyring/";
-	cert := kd + netmkaddr(addr, "tcp", "");
-
-	if (len args == 2)
-	{
-		cert = hd tl args;
-	}
-
-	(ok, nil) = sys->stat(cert);
-	if(ok < 0)
-	{
-		cert = kd + "default";
-	}
-
-	ai := kr->readauthinfo(cert);
-	if (ai == nil)
-	{
-		error("certificate for "+addr+" not found");
-		return -1;
-	}
-
-	fd: ref Sys->FD;
-	(fd, nil) = timedauclient(alg, ai, c.dfd, MG_LARGE_TIMEOUT);
-	if (fd == nil)
-	{
-		error("Authentication failed: "+sys->sprint("%r"));
-		return -1;
-	}
-
-	status("Mount...");
-	n := timedmount(fd, nil, MG_CONNDIR, sys->MREPL, "", MG_MEDIUM_TIMEOUT);
+	#status("Mount...");
+	n := timedmount(p[1], nil, MG_CONNDIR, sys->MREPL, "", MG_MEDIUM_TIMEOUT);
 	if (n < 0)
 	{
 		error("Mount failed: "+sys->sprint("%r"));
 		return -1;
 	}
 
-	status("Bind...");
-	n = sys->bind(MG_CONNDIR+path, MG_MNTDIR, sys->MAFTER);
-	if (n < 0)
-	{
-		error("Bind failed: "+sys->sprint("%r"));
-		return -1;
-	}
-	status("Host "+addr+" attached.");
+#BUG/TODO: needs cleanup:	
+	#	Avoid duplicates. The random ID in the engine name helps guard against
+	#	possibility of multiple hosts with same local hostname, connection to
+	#	localhost, etc.
 
 	(dir, ndev) := timedreaddir(MG_CONNDIR, Readdir->NONE, MG_SMALL_TIMEOUT);
 	if (ndev < 0)
@@ -2845,12 +2901,17 @@ attachremote(args: list of string, path: string) : int
 			sys->sprint("Skipping directory \"%s\", dtype = [%c]",
 			dir[i].name, dir[i].dtype));
 	}
-	if (remotedevname == "")
+
+	#	Note that the "remotedevname" here is not the full devname, so search for it
+	#	in name2host.  BUG/TODO: there is some overlap in our current use of devnames
+	#	versus names, and it should be cleaned up
+	if (name2host(remotedevname) != nil)
 	{
-		error("Remote host has no engine filesystem");
-		
+		status("Host with unique engine ID "+remotedevname+" already attached!");
+sys->print("extant host matching [%s] is [%s]\n", remotedevname, name2host(remotedevname).hostname);
+
 		status("Unmounting...");
-		if (sys->unmount("/n/remote", MG_MNTDIR) < 0)
+		if (sys->unmount(nil, MG_CONNDIR) < 0)
 		{
 			error(sys->sprint("Could not unmount host: %r"));
 		}
@@ -2858,7 +2919,58 @@ attachremote(args: list of string, path: string) : int
 		return -1;
 	}
 
-	M.mntcache.insert(remotedevname, sys->fd2path(fd));
+	#status("Bind...");
+	n = sys->bind(MG_CONNDIR+path, MG_MNTDIR, sys->MAFTER);
+	if (n < 0)
+	{
+		error("Bind failed: "+sys->sprint("%r"));
+		return -1;
+	}
+	status("Host "+addr+" attached.");
+
+	(dir, ndev) = timedreaddir(MG_CONNDIR, Readdir->NONE, MG_SMALL_TIMEOUT);
+	if (ndev < 0)
+	{
+		error(sys->sprint("dirread failed: %r"));
+
+		status("Unmounting...");
+		if (sys->unmount(MG_CONNDIR, MG_MNTDIR) < 0)
+		{
+			error(sys->sprint("Could not unmount host: %r"));
+		}
+
+		return -1;
+	}
+
+	#	Search for an engine filesystem
+	remotedevname = "";
+	for (i = 0; i < ndev; i++)
+	{
+		#	Should be more thorough: opendir, look for enginectl
+		(nil, remotedevname) = str->splitstrr(dir[i].name, "sunflower.");
+		if (remotedevname != nil)
+		{
+			break;
+		}
+		status(
+			sys->sprint("Skipping directory \"%s\", dtype = [%c]",
+			dir[i].name, dir[i].dtype));
+	}
+	if (remotedevname == "")
+	{
+		error("Remote host has no engine filesystem");
+		
+		status("Unmounting...");
+		if (sys->unmount(MG_CONNDIR, MG_MNTDIR) < 0)
+		{
+			error(sys->sprint("Could not unmount host: %r"));
+		}
+
+		return -1;
+	}
+
+	#	TODO/BUG another example of why we should use the whole devname including "sunflower." as remotedevname
+	M.mntcache.insert(remotedevname, MG_CONNDIR+"sunflower."+remotedevname);
 	M.setcachedhosts(getdevhostlist());
 
 	return 0;
@@ -3000,6 +3112,11 @@ hostid2host(id : int) : ref Host
 
 name2host(name : string) : ref Host
 {
+	if (name == nil)
+	{
+		return nil;
+	}
+
 	tmp := M.getcachedhosts();
 	while (tmp != nil)
 	{
@@ -3009,6 +3126,12 @@ name2host(name : string) : ref Host
 		}
 
 		tmp = tl tmp;
+	}
+
+	#	Not a number, so don't try hostid2host
+	if (name[0] > '9')
+	{
+		return nil;
 	}
 
 	return hostid2host(int name);
@@ -3048,7 +3171,7 @@ MguiState.deletehost(host: ref Host)
 	while (mntlist != nil)
 	{
 		mntpath := hd mntlist;
-
+sys->print("mntpath = [%s]\n", mntpath);
 		#	Remove from union in MG_MNTDIR
 		if (timedunmount(mntpath, MG_MNTDIR, MG_SMALL_TIMEOUT) < 0)
 		{

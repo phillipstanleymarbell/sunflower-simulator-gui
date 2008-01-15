@@ -3,7 +3,23 @@ Mgui: module
 	MG_DEVCHAR		: con 'j';
 	MG_CONTROLLER_SHAREDPATH: con "shared/";
 
-	MG_HELP			: con "\nUse the left and right arrow keys to scroll up and down respectively\n";
+	MG_HELP			: con	"\nUse the left and right arrow keys to scroll up and down respectively\n"+
+					"Additional GUI-only commands are:\n\n"+
+					"   @<hostname|hostid> <command>       Execute <command> remotely\n"+		
+					"   !<Inferno command>                 Execute Inferno command, e.g., \"!ps\"\n"+		
+					"   onlyactive                         Toggle disp. of only active nodes\n"+
+					"   about                              Display splash screen\n"+
+					"   connect <host> [cert [alg]]        Connect to remote engine\n"+
+					"   disconnect <host or ID>* ...       Disconnect attached hosts\n"+
+					"   sethost <hostname or ID>           Set current host\n"+
+					"   splice <src> <dst>*                Splice sim nets from src to dsts\n"+
+					"   splicestar                         Fully-connected cross-splice\n"+
+					"   eqrate                             Eq. sim. rate across hosts, once\n"+
+					"   eqrateproc <interval, secs>        Periodic rate equalization\n"+
+					"   eqtime                             Sync timeline across hosts, once\n"+
+					"   eqtimeproc <interval, secs>        Periodic timeline sync\n";
+					#"   restart                           Restart the GUI\n"+
+					#"   pload                             Parallelize config file over attached hosts\n";
 	MG_PROMPT		: con "->>  ";
 	MG_FLATTABS		: con "        ";
 	MG_INPUT_FONT		: con "/fonts/lucidasans/boldlatin1.7.font";
@@ -32,7 +48,7 @@ Mgui: module
 	MG_ERRORIMG		: con "/dis/sfgui/images/poppi-bomb.gif";
 	MG_SPLASHIMG		: con "/dis/sfgui/images/splash.gif";
 	MG_MNTDIR		: con "/mnt/sunflower/";
-	MG_CONNDIR		: con "/n/remote";
+	MG_CONNDIR		: con "/n/remote/";
 	MG_STDOUTMARKER		: con "\u0087\u00B9  ";	# Bell, 1
 	MG_STDERRMARKER		: con "\u0087\u00B2  ";	# Bell, 2
 	MG_WIDEST_GLYPH		: con "M";
@@ -130,6 +146,7 @@ Mgui: module
 		daemonized	: int;
 		pgrp		: int;
 		onlyactive	: int;
+		engineid	: int;
 
 		
 		#	Fine grained locks
