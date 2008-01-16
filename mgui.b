@@ -1915,7 +1915,7 @@ enginectl(path: string, sync : chan of int)
 				}
 				else if ((hd cmdlist)[0] == '@')
 				{
-					spawn atctl(nil, tl cmdlist);
+					spawn atctl(nil, cmdlist);
 				}
 				else
 				{
@@ -1942,8 +1942,30 @@ atctl(cmd: string, arglist: list of string)
 		host = M.localhost;
 	}
 
-	#	convert to ordinary local splice, send to remote enginectl
-	sys->fprint(host.enginectlfd, "%s\n", str->quoted(cmd::(tl arglist)));
+	sys->fprint(host.enginectlfd, "%s\n", list2str(cmd::(tl arglist)));
+}
+
+list2str(l: list of string): string
+{
+	s: string;
+
+	tmp := l;
+	while (tmp != nil)
+	{
+		#	Can have nil strings in the list. Don't add them.
+		w := hd tmp;
+		if (w != nil)
+		{
+			s += w + " ";
+		}
+
+		tmp = tl tmp;
+	}
+
+	#	Elide trailing white space
+	s = s[:len s - 1];
+
+	return s;
 }
 
 cmd_splice(cmdlist : list of string)
@@ -3317,7 +3339,8 @@ MguiState.setcachednodes(nodelist: list of ref Nodeinfo)
 	while (tmp != nil)
 	{
 		node := hd tmp;
-		if (node.iscurnode)
+
+		if (node.nodehost.hostid == M.curhost.hostid && node.iscurnode)
 		{
 			#	Update the window to which we should draw, if necessary
 			pmsgwin = node.msgwin;
