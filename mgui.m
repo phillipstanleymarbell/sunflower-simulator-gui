@@ -4,7 +4,7 @@ Mgui: module
 	MG_CONTROLLER_SHAREDPATH: con "shared/";
 
 	MG_HELP			: con	"\nUse the left and right arrow keys to scroll up and down respectively\n"+
-					"Additional GUI-only commands are:\n\n"+
+					"TAB for history-based completion. Additional GUI-only commands are:\n\n"+
 					"   @<hostname|hostid> <command>       Execute <command> remotely\n"+		
 					"   !<Inferno command>                 Exec. Inferno command, e.g., \"!ps\"\n"+		
 					"   onlyactive                         Toggle disp. of only active nodes\n"+
@@ -97,7 +97,7 @@ Mgui: module
 	MG_DFLT_AUTHNLINES	: con 4;
 
 	#	Delays for fast/slow refresh threads
-	MG_FASTPROC_SLEEP	: con 200;
+	MG_FASTPROC_SLEEP	: con 300;
 	MG_SLOWPROC_SLEEP	: con 500;
 
 	#	Timeouts in microseconds
@@ -125,6 +125,7 @@ Mgui: module
 		msgschan	: chan of string;
 		rmtchan		: chan of string;
 		tpgymousechan	: chan of Pointer;
+		updatetopology	: chan of int;
 
 		#	References to state allocated on a display
 		alertfont	: ref Font;
@@ -155,7 +156,6 @@ Mgui: module
 		sem_cachednodes	: ref Lock->Semaphore;
 		sem_curhost	: ref Lock->Semaphore;
 		sem_curnode	: ref Lock->Semaphore;
-
 
 		#	Cache of hostname <-> mount file descr names
 		mntcache	: ref Cache->StrCache;

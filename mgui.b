@@ -218,7 +218,6 @@ sys->print("1");
 	M.sem_cachednodes	= Semaphore.new();
 	M.sem_curhost		= Semaphore.new();
 	M.sem_curnode		= Semaphore.new();
-
 	
 	M.mntcache = StrCache.new();
 	if (M.mntcache == nil)
@@ -549,6 +548,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 	M.kbdchan	= chan of int;
 	M.msgschan 	= chan of string;
 	M.tpgymousechan	= chan of Pointer;
+	M.updatetopology= chan of int;
 
 	M.tpgyfont	= Font.open(M.screen.display, MG_TPGY_FONT);
 	if (M.tpgyfont == nil)
@@ -1242,6 +1242,9 @@ tpgymousework(p: Pointer)
 
 		nodes = tl nodes;
 	}
+
+	#	Update topology display
+	M.updatetopology <-= 0;
 }
 
 splash()
@@ -1336,15 +1339,14 @@ enginectlcmd(cmd: string)
 	return;
 }
 
-topologydisplay()
+updatetpgy()
 {
 	buf := array [Sys->ATOMICIO] of byte;
 	
-
 	math := load Math Math->PATH;
 	if (math == nil)
 	{
-		fatal(sys->sprint("Could not load Math module in toppologydisplay: %r"));
+		fatal(sys->sprint("Could not load Math module in updatetpgy(): %r"));
 	}
 
 	tpgyboxrect	:= get_topologyrect();
@@ -1361,8 +1363,9 @@ topologydisplay()
 	darkgrey	:= M.display.color(MG_COLOR_DARKGREY);
 	orange		:= M.display.color(MG_COLOR_LIGHTORANGE);
 
-	for (;;)
+	for(;;) alt
 	{
+	<-M.updatetopology =>
 		#	Read from device (but we write to cached list)
 		tmpnodes	:= getdevnodelist();
 		tmpnumnodes	:= len tmpnodes;
@@ -1371,12 +1374,8 @@ topologydisplay()
 		if (tmpnumnodes == 0)
 		{
 			tpgywin.draw(tpgywin.r, tpgywinbuf, nil, tpgywin.r.min);
-			if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
-			{
-				error(sys->sprint("sleep failed: %r"));
-			}
 
-			continue;
+			return;
 		}
 
 		boxperside	:= int math->ceil(math->sqrt(real tmpnumnodes));
@@ -1447,6 +1446,16 @@ topologydisplay()
 		#
 		M.setcachednodes(reorder(tmp2nodes));
 		tpgywin.draw(tpgywin.r, tpgywinbuf, nil, tpgywin.r.min);
+	}
+}
+
+topologydisplay()
+{
+	spawn updatetpgy();
+
+	for (;;)
+	{
+		M.updatetopology <-= 0;
 
 		if (sys->sleep(MG_SLOWPROC_SLEEP) < 0)
 		{
