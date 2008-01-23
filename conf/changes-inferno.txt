@@ -204,3 +204,7 @@ diff -r inferno/appl/lib/imageremap.b /Users/pip/infernoR420060303/appl/lib/imag
 
 < 
 
+
+(7) For Windows, there is a simular customization of win.c, as
+well as emu/port/main.c so that the executable does not keep
+around a windows console.  TODO: post the precise diffs here.

@@ -49,8 +49,8 @@ mksfdirs:
 	mkdir -p $DISBIN; cp -r images $DISBIN/
 	mkdir -p $ROOT/usr/sunflower/keyring
 	mkdir -p $ROOT/mnt/sunflower
-	cp -r ttf2subf /fonts/
-	cp $SUNFLOWERROOT/conf/keyring-default  $ROOT/usr/sunflower/keyring/default
+	cp -r fonts/ttf2subf $ROOT/fonts/
+	cp conf/keyring-default  $ROOT/usr/sunflower/keyring/default
 	cp -r $SUNFLOWERROOT/sim $ROOT/libsunflower
 	cp -r $SUNFLOWERROOT/sim/devsunflower.c $ROOT/emu/port
 	chmod 444 $ROOT/emu/port/devsunflower.c

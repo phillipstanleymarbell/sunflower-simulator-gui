@@ -261,6 +261,7 @@ Mgui: module
 	perrwin			: ref PScrollableText;
 	psanitywin		: ref PScrollableText;
 	pmsgwin			: ref PScrollableText;
+	msgsbgwin		: ref Image;
 	pinputwin		: ref PTextEntry;
 	prmtwin			: ref PScrollableText;
 	pauthorswin		: ref PScrollableText;

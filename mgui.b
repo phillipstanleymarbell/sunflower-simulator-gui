@@ -167,7 +167,7 @@ init(ctxt: ref Context, args: list of string)
 		fatal(sys->sprint("Could not read #e/emuargs: %r"));
 	}
 	status(sys->sprint("Run with host args \"%s\"", string buf[:n]));
-sys->print("1");
+
 	#	Get rid of program name
 	(nil, emuargs) := str->splitstrl(string buf[:n], " ");
 
@@ -394,7 +394,7 @@ guiinit(ctxt : ref Draw->Context, guiinitsync : chan of int)
 
 	#	Global msgs window reference is pmsg. It is updated when we set the current node
 	mr := get_msgswinrect();
-	msgsbgwin := M.screen.newwindow(mr, Draw->Refbackup, Draw->White);
+	msgsbgwin = M.screen.newwindow(mr, Draw->Refbackup, Draw->White);
 	M.display.image.draw(mr, msgsbgwin, nil, mr.min);
 	mrborder := pgui->getrectborder(mr);
 	M.display.image.poly(mrborder, Draw->Enddisc, Draw->Enddisc,
@@ -3353,10 +3353,19 @@ MguiState.setcachednodes(nodelist: list of ref Nodeinfo)
 		{
 			#	Update the window to which we should draw, if necessary
 			pmsgwin = node.msgwin;
-			pmsgwin.top();
+			#pmsgwin.top();
+		}
+		else
+		{
+			#	Push all windows except current to bottom, rather than trying to
+			#	_raise_ current, which would obscure the Tk menu.
+			node.msgwin.bottom();
 		}
 		tmp = tl tmp;
 	}
+	
+	#	Make sure its lowest in stack, now that we've updated stacking of windows	
+	msgsbgwin.bottom();
 
 	M.sem_cachednodes.release();
 }
