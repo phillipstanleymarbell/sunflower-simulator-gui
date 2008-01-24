@@ -769,12 +769,11 @@ pft2cacheinit(face: ref Freetype->Face, glyphcache: array of (int, ref Freetype-
 	{
 		glyphcache[i] = (i, face.loadglyph(i), 1);
 
-(nil, glyph, nil) := glyphcache[i];
-if (glyph == nil)
-{
-	sys->print("pft2cacheinit: No glyph for char [%c][==%d]\n", i, i);
-}
-
+		(nil, glyph, nil) := glyphcache[i];
+		if (glyph == nil)
+		{
+			sys->print("pft2cacheinit: No glyph for char [%c][==%d]\n", i, i);
+		}
 	}
 }
 

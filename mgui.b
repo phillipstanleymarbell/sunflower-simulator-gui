@@ -1293,22 +1293,12 @@ services()
 
 kbd(kbd, sync : chan of int)
 {
-#
-#	TODO: keyboard events should be forwarded to a Pwm win manager
-#		which micro-manages the contents of this window that is
-#		in turn managed by, e,g, Inferno's Wm
-#
 	sync <-= 0;
 
 	for (;;)
 	{
 		key := <- kbd;
 
-#
-#	TODO: must figure out the best way to do the highlighting etc
-#		(even in the absence of Pwm).
-#	We send empty pointer info; mouse thread likewise empty key info
-#
 		case key
 		{
 		PG_LTARROW	=>
@@ -1770,7 +1760,7 @@ enginectl(path: string, sync : chan of int)
 
 				spawn cmd_sethost(hd tl cmdlist);
 			
-#BUG: the atctl won't quite work since the remove node currently does not cross-mount us
+			#BUG: the atctl won't quite work since the remove node currently does not cross-mount us
 			"splice"	=>
 				if ((tl cmdlist != nil) && (hd tl cmdlist)[0] == '@')
 				{
@@ -2294,7 +2284,7 @@ pload(args : list of string)
 
 devsunflowercmd(host: ref Host, cmd: string)
 {
-#sys->print("curdevname = %s\ncurmntpt = %s, cmd = [%s]\n", M.curhost.devname, M.curhost.mntpt, cmd);
+	#sys->print("curdevname = %s\ncurmntpt = %s, cmd = [%s]\n", M.curhost.devname, M.curhost.mntpt, cmd);
 
 	curnodeid := host.getcurnodeid();
 	if (curnodeid < 0)
@@ -2461,7 +2451,6 @@ eqtime(maxskew_ms: int)
 
 
 #BUG!: should read this off the Devsunflower
-
 	global_cycletime := 1.0/4E6;
 
 
@@ -2912,7 +2901,11 @@ attachremote(args: list of string, path: string) : int
 	spawn dialler(c, netmkaddr(addr, "tcp", "9999"));
 
 
-	#status("Mount...");
+	if (DEBUG)
+	{
+		status("Mount...");
+	}
+
 	n := timedmount(p[1], nil, MG_CONNDIR, sys->MREPL, "", MG_MEDIUM_TIMEOUT);
 	if (n < 0)
 	{
@@ -2960,7 +2953,12 @@ attachremote(args: list of string, path: string) : int
 	if (name2host(remotedevname) != nil)
 	{
 		status("Host with unique engine ID "+remotedevname+" already attached!");
-sys->print("extant host matching [%s] is [%s]\n", remotedevname, name2host(remotedevname).hostname);
+
+		if (DEBUG)
+		{
+			sys->print("extant host matching [%s] is [%s]\n",
+				remotedevname, name2host(remotedevname).hostname);
+		}
 
 		status("Unmounting...");
 		if (sys->unmount(nil, MG_CONNDIR) < 0)
@@ -2971,7 +2969,11 @@ sys->print("extant host matching [%s] is [%s]\n", remotedevname, name2host(remot
 		return -1;
 	}
 
-	#status("Bind...");
+	if (DEBUG)
+	{
+		status("Bind...");
+	}
+
 	n = sys->bind(MG_CONNDIR+path, MG_MNTDIR, sys->MAFTER);
 	if (n < 0)
 	{
@@ -3086,7 +3088,10 @@ status(msg : string)
 
 error(e: string)
 {
-sys->print("%s\n", e);
+	if (DEBUG)
+	{
+		sys->print("%s\n", e);
+	}
 
 	#	Should be written to a log file, MNTDIR/log
 	if (M.gui && M.display != nil)
@@ -3224,7 +3229,12 @@ MguiState.deletehost(host: ref Host)
 	while (mntlist != nil)
 	{
 		mntpath := hd mntlist;
-sys->print("mntpath = [%s]\n", mntpath);
+
+		if (DEBUG)
+		{
+			sys->print("mntpath = [%s]\n", mntpath);
+		}
+
 		#	Remove from union in MG_MNTDIR
 		if (timedunmount(mntpath, MG_MNTDIR, MG_SMALL_TIMEOUT) < 0)
 		{
@@ -3447,7 +3457,7 @@ Host.getparsednodes(me: self ref Host) : list of ref Nodeinfo
 		return nil;
 	}
 
-#sys->print("host dir has [%d] entries\n", nnodedirs);
+	#sys->print("host dir has [%d] entries\n", nnodedirs);
 
 	#	For all subdirs, read ctl
 	for (i := 0; i < nnodedirs; i++) if (nodedirs[i].qid.qtype & Sys->QTDIR)
@@ -3534,7 +3544,7 @@ parsenodeinfo(ctlpath: string) : ref Nodeinfo
 		return nil;
 	}
 
-#TODO: for now we just parse for simrate and throttle, active
+	#TODO: for now we just parse for simrate and throttle, active
 
 	(nil, tmpr) := str->splitstrr(info, "ID =");
 	(nil, tlist) = sys->tokenize(tmpr, " \t\n");

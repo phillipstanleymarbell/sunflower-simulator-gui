@@ -244,16 +244,20 @@ Pgui : module
 
 
 	init			: fn() : (int, string);
-##	get_rectborder : fn();
-##	scale_linear : fn() : ref Draw->image;
-##	scale_bilinear : fn();
-##	average		: fn();
-#
-#	Functions for easier interfaceing with Readimg etc,
-#		automatically determining the file type like
-#		wm/view does, and retuning error if no decoder
-#		was found
+
+	#
+	#	Functions for easier interfaceing with Readimg etc, automatically determining the file type like
+	#	wm/view does, and returning error if no decoder was found
+	#
 	drawimgfromfile	: fn(filename : string, where : Draw->Rect, dstimg : ref Draw->Image) : string;
 	getimgfromfile	: fn(filename : string, display : ref Draw->Display) : (ref Draw->Image, string);
 	getrectborder	: fn(r : Draw->Rect) : array of Draw->Point;
+
+	#
+	#	Planned/TODO:
+	#
+	#	scale_linear	: fn() : ref Draw->image;
+	#	scale_bilinear	: fn();
+	#	average		: fn();
+	#
 };
